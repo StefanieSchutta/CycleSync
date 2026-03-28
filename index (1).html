@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#FAF7F2"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="CycleSync"/>
+<title>CycleSync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"/>
+
+<style>
+:root {
+  --sand: #FAF7F2;
+  --sand2: #F3EEE8;
+  --line: #EDE8E3;
+  --muted: #B0A49C;
+  --text: #3D3530;
+  --sub: #6B5E57;
+
+  /* Phase colors – overridden by JS */
+  --pc: #7B9E87;
+  --pb: #F0F7F2;
+  --pa: #D1EAD9;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--sand);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* App shell */
+#app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; }
+
+/* ── ONBOARDING ── */
+#onboarding {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  padding: calc(var(--safe-top) + 48px) 24px calc(var(--safe-bottom) + 32px);
+}
+.ob-step { display: none; flex-direction: column; gap: 0; flex: 1; }
+.ob-step.active { display: flex; }
+.ob-logo { font-family: var(--font-display); font-size: 13px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 48px; }
+.ob-title { font-family: var(--font-display); font-size: 38px; font-weight: 500; color: var(--text); line-height: 1.1; margin-bottom: 8px; }
+.ob-sub { font-size: 14px; color: var(--sub); line-height: 1.7; margin-bottom: 40px; }
+
+.ob-field { margin-bottom: 20px; }
+.ob-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+.ob-input {
+  width: 100%; border: 1.5px solid var(--line); border-radius: 14px;
+  padding: 13px 16px; font-family: var(--font-body); font-size: 16px;
+  color: var(--text); background: white; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.ob-input:focus { border-color: var(--pc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pc) 15%, transparent); }
+
+.ob-phase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+.ob-phase-card {
+  background: white; border: 1.5px solid var(--line); border-radius: 18px;
+  padding: 16px; cursor: default;
+}
+.ob-phase-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 10px; }
+.ob-phase-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.ob-phase-sub { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.ob-phase-input {
+  width: 100%; border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 8px 10px; font-size: 15px; font-family: var(--font-body);
+  color: var(--text); background: var(--sand); outline: none; text-align: center;
+}
+.ob-phase-input:focus { border-color: var(--pc); }
+.ob-total { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 24px; padding: 10px; background: white; border-radius: 12px; border: 1px solid var(--line); }
+.ob-total span { font-weight: 600; color: var(--text); }
+
+.btn-primary {
+  width: 100%; padding: 16px; border: none; border-radius: 16px;
+  background: var(--pc); color: white; font-family: var(--font-body);
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: opacity .2s, transform .1s;
+  margin-top: auto;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:active { transform: scale(.98); }
+.btn-secondary {
+  width: 100%; padding: 14px; border: 1.5px solid var(--line); border-radius: 16px;
+  background: white; color: var(--sub); font-family: var(--font-body);
+  font-size: 14px; cursor: pointer; margin-bottom: 12px; transition: border-color .2s;
+}
+.btn-secondary:hover { border-color: var(--pc); color: var(--pc); }
+
+.ob-progress { display: flex; gap: 6px; margin-bottom: 40px; }
+.ob-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: all .3s; }
+.ob-dot.active { width: 20px; border-radius: 3px; background: #7B9E87; }
+
+/* ── MAIN APP ── */
+#main { display: none; flex-direction: column; min-height: 100vh; }
+
+/* Header */
+.header {
+  padding: calc(var(--safe-top) + 14px) 20px 20px;
+  border-bottom: 1px solid var(--pa);
+  background: var(--pb);
+  transition: background .4s, border-color .4s;
+}
+.header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.header-label { font-size: 10px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 3px; }
+.header-phase { font-family: var(--font-display); font-size: 32px; font-weight: 500; color: var(--pc); line-height: 1; }
+.header-tagline { font-size: 12px; color: var(--sub); margin-top: 3px; font-style: italic; }
+.day-badge {
+  background: white; border: 1.5px solid var(--pa); border-radius: 16px;
+  padding: 7px 16px; text-align: center; cursor: pointer;
+  transition: border-color .2s;
+}
+.day-badge:hover { border-color: var(--pc); }
+.day-badge-label { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.day-badge-num { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--pc); line-height: 1.1; }
+
+/* Day picker */
+.day-picker {
+  margin-top: 14px; background: white; border-radius: 20px;
+  padding: 18px; border: 1px solid var(--pa); display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,.07);
+}
+.day-picker.open { display: block; }
+.picker-label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 10px; }
+.day-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.day-btn {
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  font-family: var(--font-body); font-size: 12px; cursor: pointer;
+  transition: all .15s;
+}
+.phase-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+.legend-label { font-size: 10px; color: var(--muted); }
+
+/* Tabs */
+.tabs {
+  display: flex; background: white;
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 100;
+}
+.tab {
+  flex: 1; padding: 13px 0; border: none; background: none;
+  font-family: var(--font-body); font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .2s, border-color .2s;
+  letter-spacing: .3px;
+}
+.tab.active { color: var(--pc); border-bottom-color: var(--pc); }
+
+/* Content */
+.content { padding: 20px 18px calc(var(--safe-bottom) + 24px); flex: 1; }
+.view { display: none; }
+.view.active { display: block; animation: fadeUp .3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* Cards */
+.card {
+  background: white; border-radius: 20px; padding: 18px;
+  border: 1px solid var(--pa); margin-bottom: 12px;
+  transition: border-color .4s;
+}
+.card-flat { background: white; border-radius: 20px; padding: 18px; border: 1px solid var(--line); margin-bottom: 12px; }
+.card-tinted { border-radius: 20px; padding: 18px; margin-bottom: 12px; background: var(--pb); border: 1px solid var(--pa); }
+.card-title { font-family: var(--font-display); font-size: 20px; color: var(--text); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-link { background: none; border: none; font-size: 12px; color: var(--pc); cursor: pointer; font-family: var(--font-body); }
+
+.section-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.divider { height: 1px; background: var(--pa); margin: 10px 0; }
+
+/* Tags */
+.tag { display: inline-block; padding: 4px 13px; border-radius: 20px; font-size: 12px; }
+.tag-phase { background: var(--pa); color: var(--pc); }
+.tag-avoid { background: #FDF0F3; color: #C4617A; }
+.tag-intensity { background: var(--pa); color: var(--pc); font-size: 11px; padding: 3px 10px; }
+
+/* Energy bar */
+.energy-bar { display: flex; gap: 4px; }
+.energy-seg { width: 20px; height: 4px; border-radius: 2px; background: var(--line); transition: background .4s; }
+.energy-seg.lit { background: var(--pc); }
+
+/* Workout card */
+.workout-item { background: var(--pb); border-radius: 14px; padding: 13px 15px; margin-bottom: 9px; }
+.workout-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.workout-name { font-size: 15px; font-weight: 500; color: var(--text); }
+.workout-dur { font-size: 12px; color: var(--muted); }
+.workout-tip { font-size: 13px; color: var(--sub); line-height: 1.65; margin-top: 7px; font-style: italic; }
+
+/* Food list */
+.food-item { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.food-dot { width: 5px; height: 5px; border-radius: 50%; background: #7B9E87; flex-shrink: 0; }
+.food-name { font-size: 14px; color: var(--text); }
+
+/* Stats row */
+.stats-row { display: flex; gap: 0; }
+.stat { flex: 1; text-align: center; padding: 12px 8px; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat-val { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--pc); }
+.stat-unit { font-size: 10px; color: var(--muted); }
+.stat-label { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+/* Weekly plan */
+.week-grid { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 4px; }
+.week-day {
+  flex-shrink: 0; width: 52px; border-radius: 14px; padding: 10px 6px;
+  text-align: center; border: 1.5px solid var(--line); background: white;
+  cursor: pointer; transition: all .2s;
+}
+.week-day.today { background: var(--pb); border-color: var(--pc); }
+.week-day-label { font-size: 10px; color: var(--muted); letter-spacing: .5px; margin-bottom: 6px; }
+.week-day-type { font-size: 18px; margin-bottom: 4px; }
+.week-day-name { font-size: 10px; color: var(--sub); line-height: 1.3; }
+
+/* Profile/Settings */
+.profile-field { margin-bottom: 16px; }
+.profile-label { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 7px; display: block; }
+.profile-input {
+  width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 11px 14px; font-family: var(--font-body); font-size: 15px;
+  color: var(--text); background: white; outline: none; transition: border-color .2s;
+}
+.profile-input:focus { border-color: var(--pc); }
+.phase-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.phase-row:last-child { border-bottom: none; }
+.phase-color-bar { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+.phase-row-info { flex: 1; }
+.phase-row-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.phase-row-days { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.phase-day-input {
+  width: 52px; text-align: center; border: 1.5px solid var(--line);
+  border-radius: 10px; padding: 8px 4px; font-family: var(--font-body);
+  font-size: 16px; color: var(--text); background: var(--sand); outline: none;
+}
+.phase-day-input:focus { border-color: var(--pc); }
+.cycle-total-badge {
+  text-align: center; padding: 12px; background: var(--pb);
+  border-radius: 14px; font-size: 13px; color: var(--sub);
+  border: 1px solid var(--pa); margin: 4px 0 20px;
+}
+
+/* AI Coach */
+.coach-context {
+  display: flex; gap: 8px; padding: 12px 15px;
+  background: var(--pb); border-radius: 14px; margin-bottom: 18px;
+}
+.coach-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pc); margin-top: 4px; flex-shrink: 0; }
+.coach-text { font-size: 13px; color: var(--sub); line-height: 1.65; }
+.chat-wrap { max-height: 300px; overflow-y: auto; margin-bottom: 14px; padding-right: 2px; }
+.msg { display: flex; margin-bottom: 10px; }
+.msg.user { justify-content: flex-end; }
+.msg-bubble {
+  max-width: 84%; padding: 11px 15px;
+  font-family: var(--font-body); font-size: 13.5px; line-height: 1.65;
+}
+.msg.user .msg-bubble { background: var(--pc); color: white; border-radius: 18px 18px 4px 18px; }
+.msg.ai .msg-bubble { background: var(--pa); color: var(--text); border-radius: 18px 18px 18px 4px; }
+.quick-q {
+  display: block; width: 100%; text-align: left;
+  background: var(--pa); border: none; border-radius: 12px;
+  padding: 10px 14px; margin-bottom: 8px;
+  font-family: var(--font-body); font-size: 13px; color: var(--pc);
+  cursor: pointer; transition: opacity .2s;
+}
+.quick-q:hover { opacity: .8; }
+.chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.chat-textarea {
+  flex: 1; border: 1.5px solid var(--pa); border-radius: 14px;
+  padding: 10px 13px; font-family: var(--font-body); font-size: 14px;
+  color: var(--text); background: white; resize: none; outline: none; line-height: 1.5;
+  transition: border-color .2s;
+}
+.chat-textarea:focus { border-color: var(--pc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pc) 15%, transparent); }
+.chat-send {
+  width: 42px; height: 42px; flex-shrink: 0; border: none; border-radius: 12px;
+  background: var(--pc); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: opacity .2s;
+}
+.chat-send:disabled { opacity: .3; cursor: default; }
+.typing { display: flex; gap: 5px; padding: 10px 15px; }
+.typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pc); animation: typingPulse 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typingPulse { 0%,80%,100%{transform:scale(0);opacity:.3} 40%{transform:scale(1);opacity:1} }
+
+/* Cycle SVG wheel */
+#wheel-svg { max-width: 100%; display: block; margin: 0 auto; }
+
+/* Macro bars */
+.macro-row { margin-bottom: 10px; }
+.macro-label-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+.macro-bar-bg { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.macro-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+/* Save button */
+.btn-save {
+  width: 100%; padding: 14px; border: none; border-radius: 14px;
+  background: var(--pc); color: white; font-family: var(--font-body);
+  font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;
+  transition: opacity .2s;
+}
+.btn-save:hover { opacity: .88; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: calc(var(--safe-bottom) + 20px); left: 50%;
+  transform: translateX(-50%) translateY(20px); background: #3D3530;
+  color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px;
+  opacity: 0; transition: all .3s; z-index: 999; white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Tip callout */
+.tip-box {
+  border-radius: 16px; padding: 15px 16px; margin-bottom: 0;
+}
+
+/* Phase banner */
+.phase-banner {
+  border-radius: 16px; padding: 14px 16px; margin-bottom: 12px;
+  font-size: 13.5px; color: var(--sub); line-height: 1.7;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── ONBOARDING ── -->
+<div id="onboarding">
+
+  <!-- Step 1: Willkommen -->
+  <div class="ob-step active" id="ob1">
+    <div class="ob-logo">CycleSync</div>
+    <div class="ob-progress">
+      <div class="ob-dot active" id="prog1"></div>
+      <div class="ob-dot" id="prog2"></div>
+      <div class="ob-dot" id="prog3"></div>
+    </div>
+    <h1 class="ob-title">Dein Zyklus.<br/>Dein Plan.</h1>
+    <p class="ob-sub">Training und Ernährung, die sich deinen Hormonen anpassen — nicht umgekehrt. Für mehr Energie, weniger Frust, nachhaltige Ergebnisse.</p>
+    <div style="flex:1"></div>
+    <button class="btn-primary" id="ob1-next">Los geht's →</button>
+  </div>
+
+  <!-- Step 2: Profil -->
+  <div class="ob-step" id="ob2">
+    <div class="ob-logo">CycleSync</div>
+    <div class="ob-progress">
+      <div class="ob-dot" id="prog1b"></div>
+      <div class="ob-dot active" id="prog2b"></div>
+      <div class="ob-dot" id="prog3b"></div>
+    </div>
+    <h1 class="ob-title">Dein Profil</h1>
+    <p class="ob-sub">Damit dein Plan wirklich zu dir passt — Kalorien, Makros und Training werden darauf abgestimmt.</p>
+    <div class="ob-field">
+      <label class="ob-label" for="inp-name">Dein Name</label>
+      <input class="ob-input" id="inp-name" type="text" placeholder="z.B. Steffi" autocomplete="off"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="ob-field">
+        <label class="ob-label" for="inp-age">Alter</label>
+        <input class="ob-input" id="inp-age" type="number" placeholder="39" min="16" max="65"/>
+      </div>
+      <div class="ob-field">
+        <label class="ob-label" for="inp-weight">Gewicht (kg)</label>
+        <input class="ob-input" id="inp-weight" type="number" placeholder="70" min="40" max="150"/>
+      </div>
+    </div>
+    <div class="ob-field">
+      <label class="ob-label" for="inp-height">Größe (cm)</label>
+      <input class="ob-input" id="inp-height" type="number" placeholder="170" min="140" max="210"/>
+    </div>
+    <div class="ob-field">
+      <label class="ob-label" for="inp-activity">Aktivitätslevel</label>
+      <select class="ob-input" id="inp-activity">
+        <option value="1.2">Überwiegend sitzend (kaum Sport)</option>
+        <option value="1.375" selected>Desk-Job + 3–5× Sport/Woche</option>
+        <option value="1.55">Aktiv (tägliches Training)</option>
+        <option value="1.725">Sehr aktiv (intensiv, 2× täglich)</option>
+      </select>
+    </div>
+    <div style="flex:1"></div>
+    <button class="btn-secondary" id="ob2-back">← Zurück</button>
+    <button class="btn-primary" id="ob2-next">Weiter →</button>
+  </div>
+
+  <!-- Step 3: Zyklus -->
+  <div class="ob-step" id="ob3">
+    <div class="ob-logo">CycleSync</div>
+    <div class="ob-progress">
+      <div class="ob-dot" id="prog1c"></div>
+      <div class="ob-dot" id="prog2c"></div>
+      <div class="ob-dot active" id="prog3c"></div>
+    </div>
+    <h1 class="ob-title">Dein Zyklus</h1>
+    <p class="ob-sub">Wie lange ist jede Phase bei dir? Typisch sind 7–14 Tage pro Phase — aber jeder Zyklus ist anders.</p>
+    <div class="ob-phase-grid">
+      <div class="ob-phase-card">
+        <div class="ob-phase-dot" style="background:#C4617A"></div>
+        <div class="ob-phase-name">Menstruation</div>
+        <div class="ob-phase-sub">Deine Periode</div>
+        <input class="ob-phase-input" id="pd-men" type="number" value="7" min="2" max="10"/>
+        <div style="font-size:10px;color:#B0A49C;text-align:center;margin-top:4px">Tage</div>
+      </div>
+      <div class="ob-phase-card">
+        <div class="ob-phase-dot" style="background:#7B9E87"></div>
+        <div class="ob-phase-name">Follikelphase</div>
+        <div class="ob-phase-sub">Nach der Periode</div>
+        <input class="ob-phase-input" id="pd-fol" type="number" value="7" min="3" max="14"/>
+        <div style="font-size:10px;color:#B0A49C;text-align:center;margin-top:4px">Tage</div>
+      </div>
+      <div class="ob-phase-card">
+        <div class="ob-phase-dot" style="background:#D4845A"></div>
+        <div class="ob-phase-name">Eisprung</div>
+        <div class="ob-phase-sub">Ovulationsphase</div>
+        <input class="ob-phase-input" id="pd-ovu" type="number" value="4" min="2" max="6"/>
+        <div style="font-size:10px;color:#B0A49C;text-align:center;margin-top:4px">Tage</div>
+      </div>
+      <div class="ob-phase-card">
+        <div class="ob-phase-dot" style="background:#8B7ABF"></div>
+        <div class="ob-phase-name">Lutealphase</div>
+        <div class="ob-phase-sub">Vor der Periode</div>
+        <input class="ob-phase-input" id="pd-lut" type="number" value="10" min="5" max="18"/>
+        <div style="font-size:10px;color:#B0A49C;text-align:center;margin-top:4px">Tage</div>
+      </div>
+    </div>
+    <div class="ob-total" id="ob-cycle-total">Gesamtzyklus: <span id="ob-total-num">28</span> Tage</div>
+    <div class="ob-field">
+      <label class="ob-label" for="inp-cycleday">Aktueller Zyklustag</label>
+      <input class="ob-input" id="inp-cycleday" type="number" placeholder="z.B. 8" min="1" max="42"/>
+    </div>
+    <button class="btn-secondary" id="ob3-back">← Zurück</button>
+    <button class="btn-primary" id="ob3-done">Plan erstellen ✨</button>
+  </div>
+
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="main">
+
+  <!-- Header -->
+  <div class="header" id="app-header">
+    <div class="header-row">
+      <div>
+        <div class="header-label">CycleSync</div>
+        <div class="header-phase" id="hdr-phase">Follikelphase</div>
+        <div class="header-tagline" id="hdr-tagline">Aufbau & Energie</div>
+      </div>
+      <div class="day-badge" id="day-badge-btn">
+        <div class="day-badge-label">Tag</div>
+        <div class="day-badge-num" id="hdr-day">8</div>
+      </div>
+    </div>
+    <div class="day-picker" id="day-picker">
+      <div class="picker-label">ZYKLUSTAG WÄHLEN</div>
+      <div class="day-grid" id="day-grid"></div>
+      <div class="phase-legend" id="phase-legend"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-view="heute">Heute</button>
+    <button class="tab" data-view="training">Training</button>
+    <button class="tab" data-view="ernaehrung">Ernährung</button>
+    <button class="tab" data-view="coach">Coach</button>
+    <button class="tab" data-view="einstellungen">Profil</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- HEUTE -->
+    <div class="view active" id="view-heute">
+      <!-- Wheel card -->
+      <div class="card" id="heute-wheel-card">
+        <svg id="wheel-svg" width="220" height="220" viewBox="0 0 220 220"></svg>
+        <div style="display:flex;justify-content:center;gap:28px;margin-top:14px;padding-top:14px;border-top:1px solid var(--pa)">
+          <div style="text-align:center">
+            <div class="section-label" style="color:var(--muted);margin-bottom:6px">Energie</div>
+            <div class="energy-bar" id="energy-bar"></div>
+          </div>
+          <div style="width:1px;background:var(--line)"></div>
+          <div>
+            <div class="section-label" style="color:var(--muted);margin-bottom:4px">Hormone</div>
+            <div style="font-size:12px;color:var(--sub)" id="hormone-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal stats -->
+      <div class="card-flat" id="heute-stats">
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+
+      <!-- Weight loss tip -->
+      <div class="card-tinted" id="heute-wtip">
+        <div class="section-label" id="wtip-label" style="margin-bottom:6px"></div>
+        <div style="font-size:13.5px;color:var(--text);line-height:1.7" id="wtip-text"></div>
+      </div>
+
+      <!-- Today workout preview -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Training heute</div>
+          <button class="card-link" onclick="switchTab('training')">Alle →</button>
+        </div>
+        <div id="heute-workout"></div>
+      </div>
+
+      <!-- Nutrition preview -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Heute essen</div>
+          <button class="card-link" onclick="switchTab('ernaehrung')">Alle →</button>
+        </div>
+        <div id="heute-nutrition-tags" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px"></div>
+        <div style="font-size:12px;color:var(--muted)" id="heute-kcal"></div>
+      </div>
+    </div>
+
+    <!-- TRAINING -->
+    <div class="view" id="view-training">
+      <div style="margin-bottom:20px">
+        <h2 style="font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:3px">Trainingsplan</h2>
+        <p style="font-size:13px;color:var(--muted)" id="training-subtitle"></p>
+      </div>
+      <!-- Weekly schedule -->
+      <div class="card" id="week-card">
+        <div class="card-title" style="margin-bottom:12px">Diese Woche</div>
+        <div class="week-grid" id="week-grid"></div>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">7× wöchentlich — Mix aus Kraft, Cardio & Mobilität</p>
+      </div>
+      <!-- Phase workouts -->
+      <div id="training-list"></div>
+      <!-- Phase overview -->
+      <div class="card-flat">
+        <div class="card-title" style="margin-bottom:12px">Alle Phasen</div>
+        <div id="all-phases-training"></div>
+      </div>
+    </div>
+
+    <!-- ERNÄHRUNG -->
+    <div class="view" id="view-ernaehrung">
+      <div style="margin-bottom:20px">
+        <h2 style="font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:3px">Ernährungsplan</h2>
+        <p style="font-size:13px;color:var(--muted)" id="ern-subtitle"></p>
+      </div>
+      <!-- Macros -->
+      <div class="card" id="macro-card">
+        <div class="section-label" style="color:var(--pc);margin-bottom:14px">Deine Makros</div>
+        <div id="macro-bars"></div>
+        <div class="divider" style="margin-top:14px"></div>
+        <div style="font-size:12px;color:var(--sub);margin-top:10px;line-height:1.7" id="macro-note"></div>
+      </div>
+      <!-- Focus nutrients -->
+      <div class="card">
+        <div class="section-label" style="color:var(--pc);margin-bottom:10px">Nährstoff-Fokus</div>
+        <div id="ern-focus" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+      </div>
+      <!-- Foods -->
+      <div class="card">
+        <div class="section-label" style="color:#7B9E87;margin-bottom:12px">Jetzt essen</div>
+        <div id="ern-foods"></div>
+      </div>
+      <!-- Avoid -->
+      <div class="card-flat">
+        <div class="section-label" style="color:#C4617A;margin-bottom:10px">Besser meiden</div>
+        <div id="ern-avoid" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+      </div>
+      <!-- Tip -->
+      <div class="card" id="ern-tip-card" style="background:linear-gradient(135deg,var(--pb),var(--sand))">
+        <div class="section-label" style="margin-bottom:8px">Pro-Tipp</div>
+        <p style="font-size:14px;color:var(--text);line-height:1.75;font-style:italic" id="ern-tip"></p>
+      </div>
+      <!-- Age tip -->
+      <div class="card-flat">
+        <div class="section-label" style="color:var(--pc);margin-bottom:8px">Mit 39+ besonders wichtig</div>
+        <p style="font-size:13.5px;color:var(--sub);line-height:1.7" id="age-tip"></p>
+      </div>
+    </div>
+
+    <!-- COACH -->
+    <div class="view" id="view-coach">
+      <div style="margin-bottom:16px">
+        <h2 style="font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:3px">KI-Coach</h2>
+        <p style="font-size:13px;color:var(--muted)">Auf deinen Zyklus & dein Profil abgestimmt</p>
+      </div>
+      <div class="coach-context">
+        <div class="coach-dot"></div>
+        <div class="coach-text" id="coach-context-text"></div>
+      </div>
+      <div class="card">
+        <div id="quick-questions"></div>
+        <div class="chat-wrap" id="chat-wrap" style="display:none"></div>
+        <div id="typing-indicator" style="display:none" class="typing">
+          <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" id="chat-input" rows="2" placeholder="Stell deine Frage…"></textarea>
+          <button class="chat-send" id="chat-send" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EINSTELLUNGEN / PROFIL -->
+    <div class="view" id="view-einstellungen">
+      <div style="margin-bottom:20px">
+        <h2 style="font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:3px">Profil & Einstellungen</h2>
+        <p style="font-size:13px;color:var(--muted)">Anpassen, wenn sich etwas ändert</p>
+      </div>
+      <div class="card-flat">
+        <div class="section-label" style="color:var(--muted);margin-bottom:14px">Persönliche Daten</div>
+        <div class="profile-field">
+          <label class="profile-label">Name</label>
+          <input class="profile-input" id="set-name" type="text"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="profile-field">
+            <label class="profile-label">Alter</label>
+            <input class="profile-input" id="set-age" type="number" min="16" max="65"/>
+          </div>
+          <div class="profile-field">
+            <label class="profile-label">Gewicht (kg)</label>
+            <input class="profile-input" id="set-weight" type="number" min="40" max="150"/>
+          </div>
+        </div>
+        <div class="profile-field">
+          <label class="profile-label">Größe (cm)</label>
+          <input class="profile-input" id="set-height" type="number" min="140" max="210"/>
+        </div>
+        <div class="profile-field">
+          <label class="profile-label">Aktivitätslevel</label>
+          <select class="profile-input" id="set-activity">
+            <option value="1.2">Überwiegend sitzend</option>
+            <option value="1.375">Desk-Job + 3–5× Sport/Woche</option>
+            <option value="1.55">Aktiv (tägliches Training)</option>
+            <option value="1.725">Sehr aktiv</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-flat" style="margin-top:0">
+        <div class="section-label" style="color:var(--muted);margin-bottom:14px">Zyklus anpassen</div>
+        <div id="phase-settings"></div>
+        <div class="cycle-total-badge">Gesamtzyklus: <strong id="set-total">28</strong> Tage</div>
+        <div class="profile-field">
+          <label class="profile-label">Aktueller Tag</label>
+          <input class="profile-input" id="set-cycleday" type="number" min="1" max="42"/>
+        </div>
+      </div>
+      <button class="btn-save" id="save-btn">Speichern ✓</button>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--line)">
+        <button onclick="resetApp()" style="background:none;border:none;font-size:13px;color:#C4617A;cursor:pointer;font-family:var(--font-body)">
+          Neu starten (Daten löschen)
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast">Gespeichert ✓</div>
+
+</div><!-- /app -->
+
+<script>
+// ──────────────────────────────────────────────
+// DATA
+// ──────────────────────────────────────────────
+
+const PHASE_DEFS = [
+  {
+    id: "menstrual", name: "Menstruation", color: "#C4617A", bg: "#FDF0F3", accent: "#F8D7DF",
+    tagline: "Ruhe & Erneuerung", hormone: "Östrogen & Progesteron niedrig", energy: 2,
+    workouts: [
+      { name: "Yin Yoga", duration: "30 min", intensity: "Sanft", tip: "Lange gehaltene Posen lösen Beckenspannungen, reduzieren Krämpfe spürbar" },
+      { name: "Spaziergang", duration: "20–40 min", intensity: "Niedrig", tip: "Frische Luft & leichte Bewegung fördern Durchblutung besser als komplette Ruhe" },
+      { name: "Stretching & Mobilität", duration: "20–25 min", intensity: "Sanft", tip: "Hüftöffner, Piriformis-Dehnung & unterer Rücken — genau dort, wo Schmerzen sitzen" },
+      { name: "Leichtes Pilates", duration: "25 min", intensity: "Sanft", tip: "Atemübungen & sanfte Core-Aktivierung ohne Bauchpresse" },
+      { name: "Walking Meditation", duration: "30 min", intensity: "Sehr niedrig", tip: "Bewusstes Gehen senkt Cortisol und unterstützt hormonellen Reset" },
+      { name: "Faszienrollen", duration: "20 min", intensity: "Sanft", tip: "Oberschenkel, Hüfte & Rücken — bereitet den Körper auf die nächste Phase vor" },
+      { name: "Leichtes Schwimmen", duration: "30 min", intensity: "Niedrig", tip: "Wassertemperatur senkt Entzündungen, schwebend wirkt entlastend auf Gelenke" },
+    ],
+    weekEmojis: ["🌊","🚶‍♀️","🧘‍♀️","💆‍♀️","🌿","🧘‍♀️","🚶‍♀️"],
+    nutrition: {
+      focus: ["Eisen", "Omega-3", "Magnesium", "Zink", "Vitamin C"],
+      foods: ["Linsen & Hülsenfrüchte", "Dunkle Schokolade (85%+)", "Lachs & Sardinen", "Spinat & Rucola", "Kürbiskerne", "Ingwer-Tee", "Rote Bete"],
+      avoid: ["Koffein", "Alkohol", "Zucker", "Hochverarbeitetes", "Salz (Bloating)"],
+      tip: "Eisen aus Hülsenfrüchten immer mit Vitamin C kombinieren (Zitrone, Paprika) — steigert Aufnahme um bis zu 300%.",
+      kcalMod: 100,
+      macros: { protein: .30, carbs: .40, fat: .30 },
+    },
+    weightLoss: "Hormonspiegel ist im Tief — Kalorienzählen jetzt pausieren und auf Wohlbefinden fokussieren. Wassereinlagerungen von letzter Phase nehmen ab.",
+    ageTip: "Mit 39 ist Eisen besonders wichtig — Erschöpfung kann auf Mangel hinweisen. Zink und Magnesium unterstützen Hormonsynthese für den nächsten Zyklus.",
+  },
+  {
+    id: "follicular", name: "Follikelphase", color: "#7B9E87", bg: "#F0F7F2", accent: "#D1EAD9",
+    tagline: "Aufbau & Energie", hormone: "Östrogen steigt stetig", energy: 4,
+    workouts: [
+      { name: "Krafttraining Unterkörper", duration: "45–55 min", intensity: "Mittel–Hoch", tip: "Squats, Lunges, Deadlifts — Östrogen schützt Muskeln, ideal für Progression" },
+      { name: "HIIT", duration: "30 min", intensity: "Hoch", tip: "Kurze Intervalle (20/10 oder 40/20) — Ausdauerkapazität ist jetzt am aufnahmefähigsten" },
+      { name: "Kraft Oberkörper", duration: "45 min", intensity: "Mittel–Hoch", tip: "Drücken, Ziehen, Schultern — neue Gewichte ausprobieren, Körper adaptiert besser" },
+      { name: "Laufen", duration: "35–45 min", intensity: "Mittel", tip: "Tempo aufbauen — Fettstoffwechsel und Ausdauer verbessern sich in dieser Phase schneller" },
+      { name: "Pilates (Advanced)", duration: "45 min", intensity: "Mittel", tip: "Tiefe Core-Stabilität, Hüftkraft, Coordination — Grundlage für intensiveres Training" },
+      { name: "Ganzkörper-Kraft", duration: "55 min", intensity: "Hoch", tip: "Compound-Bewegungen: Kreuzheben, Klimmzüge, Bankdrücken — volle Energie nutzen" },
+      { name: "Aktive Erholung / Yoga", duration: "40 min", intensity: "Niedrig", tip: "Fließendes Vinyasa oder leichtes Stretching — Muskeln erholen sich für nächste Woche" },
+    ],
+    weekEmojis: ["💪","🏃‍♀️","🏋️‍♀️","🔥","🧘‍♀️","💪","🌿"],
+    nutrition: {
+      focus: ["Protein", "Komplexe Carbs", "Probiotika", "B-Vitamine", "Leinsamen"],
+      foods: ["Eier & Hühnchen", "Quinoa & Hafer", "Griechischer Joghurt", "Brokkoli & Spargel", "Fermentierte LM", "Leinsamen täglich", "Süßkartoffeln"],
+      avoid: ["Zu viel gesättigte Fette", "Alkohol", "Stark Verarbeitetes"],
+      tip: "Leinsamen (1–2 EL täglich) unterstützen den Östrogen-Metabolismus optimal — in Joghurt, Smoothie oder Porridge.",
+      kcalMod: 0,
+      macros: { protein: .32, carbs: .42, fat: .26 },
+    },
+    weightLoss: "Stoffwechsel zieht an. Beste Phase für moderates Kaloriendefizit (−300 kcal) mit hohem Proteinanteil. Heißhunger ist gering — jetzt ist Disziplin leichter.",
+    ageTip: "Östrogen fördert Kollagensynthese — Vitamin C und Gelatine/Kollagenprotein jetzt besonders sinnvoll. Für Knochen und Gelenke: Kalzium & Vitamin D nicht vergessen.",
+  },
+  {
+    id: "ovulatory", name: "Ovulationsphase", color: "#D4845A", bg: "#FDF4EF", accent: "#FAE0D0",
+    tagline: "Peak Power", hormone: "LH & Östrogen auf Peak", energy: 5,
+    workouts: [
+      { name: "Heavy Lifting", duration: "55–65 min", intensity: "Sehr hoch", tip: "1-RM-Tests oder schwere Sets — Schmerztoleranz und Koordination sind jetzt maximal" },
+      { name: "HIIT / Tabata", duration: "25–35 min", intensity: "Sehr hoch", tip: "Maximale Intervalle — Körper ist auf Top-Performance, Fettverbrennung peaks" },
+      { name: "Spinning / Cycling", duration: "45–50 min", intensity: "Hoch", tip: "Sprints einbauen — kardiovaskuläre Kapazität ist in dieser Phase am größten" },
+      { name: "Bootcamp / Circuit", duration: "45 min", intensity: "Sehr hoch", tip: "Gruppentraining wirkt jetzt extra motivierend durch erhöhte soziale Energie" },
+      { name: "Laufen (Tempo)", duration: "35–40 min", intensity: "Hoch", tip: "Tempodauerlauf oder Fahrtspiel — beste Laufperformance des Zyklus" },
+      { name: "Kraft + Cardio Kombi", duration: "60 min", intensity: "Hoch", tip: "Superset-Training mit kurzen Cardio-Blöcken — maximale Kalorienverbrennung" },
+      { name: "Aktive Erholung", duration: "30–40 min", intensity: "Niedrig", tip: "Leichtes Yoga oder Schwimmen — Übertraining vermeiden, Phase ist kurz" },
+    ],
+    weekEmojis: ["🏋️‍♀️","🔥","🚴‍♀️","💥","🏃‍♀️","💪","🌿"],
+    nutrition: {
+      focus: ["Antioxidantien", "Ballaststoffe", "Zink", "Folsäure", "Vitamin E"],
+      foods: ["Beeren & Kirschen", "Karotten & Rote Bete", "Avocado", "Walnüsse & Kürbiskerne", "Grüner Salat", "Kichererbsen", "Granatapfel"],
+      avoid: ["Zu viel Salz (Blähungen)", "Transfette", "Alkohol"],
+      tip: "Antioxidantienreiche Ernährung schützt Eizellen vor oxidativem Stress. Vitamin E aus Nüssen und Avocado besonders wertvoll.",
+      kcalMod: 150,
+      macros: { protein: .33, carbs: .40, fat: .27 },
+    },
+    weightLoss: "Peak-Stoffwechsel! Stärkste Fettverbrennungsphase des Zyklus. Intensiv trainieren, Protein hochhalten. Phase ist kurz — jetzt alles geben.",
+    ageTip: "Mit 39 nimmt der antioxidative Schutz ab — Beeren, Granatapfel und Kurkuma sind jetzt besonders wichtig. CoQ10 als Supplement erwägenswert.",
+  },
+  {
+    id: "luteal", name: "Lutealphase", color: "#8B7ABF", bg: "#F4F0FA", accent: "#DDD5F0",
+    tagline: "Aufladen & Ausgleichen", hormone: "Progesteron dominant", energy: 3,
+    workouts: [
+      { name: "Moderates Krafttraining", duration: "40–50 min", intensity: "Mittel", tip: "Volumen um 20% reduzieren, Technik perfektionieren, keine neuen Maximalgewichte" },
+      { name: "Yoga / Yin Yoga", duration: "45 min", intensity: "Niedrig–Mittel", tip: "Progesteron unterstützt Entspannungsreaktion — Yoga wirkt tiefer als in anderen Phasen" },
+      { name: "Wandern / Power Walking", duration: "45–60 min", intensity: "Niedrig–Mittel", tip: "NEAT steigern statt Hochintensiv — Kalorienverbrennung ohne Cortisol-Spike" },
+      { name: "Schwimmen", duration: "35–45 min", intensity: "Mittel", tip: "Wassertemperatur wirkt entzündungshemmend, schwebend entlastet Gelenke optimal" },
+      { name: "Pilates / Barre", duration: "45 min", intensity: "Mittel", tip: "Sanfte Kraft, keine Sprünge — PMS-Symptome werden durch Bewegung deutlich gemildert" },
+      { name: "Radfahren (moderat)", duration: "40–50 min", intensity: "Mittel", tip: "Gleichmäßiges Tempo, keine Intervalle — Ausdauer ohne Überbelastung" },
+      { name: "Aktive Erholung", duration: "25–35 min", intensity: "Sehr niedrig", tip: "Faszienrollen, Stretching, Atemübungen — Körper auf neue Menstruation vorbereiten" },
+    ],
+    weekEmojis: ["💜","🧘‍♀️","🚶‍♀️","🏊‍♀️","💪","🚲","🌸"],
+    nutrition: {
+      focus: ["Magnesium", "Komplexe Carbs", "Calcium", "Vitamin B6", "Tryptophan"],
+      foods: ["Süßkartoffeln & Kürbis", "Dunkle Schokolade (85%+)", "Bananen", "Mandeln & Walnüsse", "Brokkoli & Grünkohl", "Haferflocken", "Kamillentee"],
+      avoid: ["Koffein (verstärkt PMS)", "Zucker (Stimmungssturz)", "Salz (Wassereinlagerung)", "Alkohol"],
+      tip: "Magnesium (300mg abends) reduziert Heißhunger, Krämpfe und Schlafprobleme signifikant. Besonders wirksam ab Tag 20.",
+      kcalMod: 200,
+      macros: { protein: .28, carbs: .45, fat: .27 },
+    },
+    weightLoss: "Wassereinlagerungen sind biologisch normal — Waage für 5–7 Tage weglegen. Fokus auf Nährstoffdichte, nicht Kalorien. Heißhunger ist kein Versagen.",
+    ageTip: "Progesteron sinkt mit dem Alter stärker als Östrogen — PMS kann intensiver werden. Vitamin B6 (50mg), Magnesium und Omega-3 sind evidenzbasierte Unterstützung.",
+  },
+];
+
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+
+let profile = {
+  name: "", age: 39, weight: 70, height: 170,
+  activity: 1.375, cycleDay: 8,
+  phaseDays: { menstrual: 7, follicular: 7, ovulatory: 4, luteal: 10 }
+};
+
+let chatHistory = [];
+
+function loadProfile() {
+  const s = localStorage.getItem("cs_profile");
+  if (s) { try { profile = JSON.parse(s); } catch(e){} }
+}
+function saveProfile() {
+  localStorage.setItem("cs_profile", JSON.stringify(profile));
+}
+function isOnboarded() {
+  return !!localStorage.getItem("cs_onboarded");
+}
+
+// ──────────────────────────────────────────────
+// CALCULATIONS
+// ──────────────────────────────────────────────
+
+function calcBMR(p) {
+  // Mifflin-St Jeor for women
+  return 10 * p.weight + 6.25 * p.height - 5 * p.age - 161;
+}
+function calcTDEE(p) {
+  return Math.round(calcBMR(p) * p.activity);
+}
+function calcGoalKcal(p, phaseDef) {
+  const tdee = calcTDEE(p);
+  const mod = phaseDef.nutrition.kcalMod;
+  // Moderate deficit for fat loss, adjusted by phase
+  const base = tdee - 350 + mod;
+  return Math.round(base / 10) * 10;
+}
+function calcMacros(p, phaseDef) {
+  const kcal = calcGoalKcal(p, phaseDef);
+  const m = phaseDef.nutrition.macros;
+  return {
+    kcal,
+    protein: Math.round(kcal * m.protein / 4),
+    carbs: Math.round(kcal * m.carbs / 4),
+    fat: Math.round(kcal * m.fat / 9),
+  };
+}
+function calcBMI(p) {
+  const h = p.height / 100;
+  return (p.weight / (h * h)).toFixed(1);
+}
+function calcProteinMin(p) {
+  // For active women over 35: 1.8g/kg
+  return Math.round(p.weight * 1.8);
+}
+
+// ──────────────────────────────────────────────
+// CYCLE LOGIC
+// ──────────────────────────────────────────────
+
+function buildPhases(phaseDays) {
+  const ids = ["menstrual", "follicular", "ovulatory", "luteal"];
+  let start = 1;
+  return ids.map(id => {
+    const days = phaseDays[id];
+    const end = start + days - 1;
+    const def = PHASE_DEFS.find(p => p.id === id);
+    const phase = { ...def, start, end, days };
+    start = end + 1;
+    return phase;
+  });
+}
+
+function getPhase(cycleDay, phaseDays) {
+  const phases = buildPhases(phaseDays);
+  const total = phases.reduce((s, p) => s + p.days, 0);
+  const d = ((cycleDay - 1) % total) + 1;
+  return phases.find(p => d >= p.start && d <= p.end) || phases[phases.length - 1];
+}
+
+function totalCycleDays(phaseDays) {
+  return Object.values(phaseDays).reduce((a, b) => a + b, 0);
+}
+
+// ──────────────────────────────────────────────
+// CSS VARS — update on phase change
+// ──────────────────────────────────────────────
+
+function applyPhaseTheme(phase) {
+  const r = document.documentElement.style;
+  r.setProperty("--pc", phase.color);
+  r.setProperty("--pb", phase.bg);
+  r.setProperty("--pa", phase.accent);
+}
+
+// ──────────────────────────────────────────────
+// WHEEL SVG
+// ──────────────────────────────────────────────
+
+function renderWheel(currentDay) {
+  const svg = document.getElementById("wheel-svg");
+  if (!svg) return;
+  const phases = buildPhases(profile.phaseDays);
+  const total = totalCycleDays(profile.phaseDays);
+  const cx = 110, cy = 110, r = 82, inner = 54;
+  let html = "";
+
+  // Segments
+  phases.forEach(phase => {
+    for (let d = phase.start; d <= phase.end; d++) {
+      const i = d - 1;
+      const sa = (i / total * 360 - 90) * Math.PI / 180;
+      const ea = ((i + 1) / total * 360 - 90) * Math.PI / 180;
+      const x1 = cx + r * Math.cos(sa), y1 = cy + r * Math.sin(sa);
+      const x2 = cx + r * Math.cos(ea), y2 = cy + r * Math.sin(ea);
+      const ix1 = cx + inner * Math.cos(sa), iy1 = cy + inner * Math.sin(sa);
+      const ix2 = cx + inner * Math.cos(ea), iy2 = cy + inner * Math.sin(ea);
+      const active = d === currentDay;
+      html += `<path d="M${ix1} ${iy1}L${x1} ${y1}A${r} ${r} 0 0 1 ${x2} ${y2}L${ix2} ${iy2}A${inner} ${inner} 0 0 0 ${ix1} ${iy1}"
+        fill="${phase.color}" opacity="${active ? 1 : 0.22}" stroke="#FAF7F2"
+        stroke-width="${active ? 1.5 : 0.4}"
+        style="cursor:pointer" onclick="setDay(${d})" />`;
+    }
+  });
+
+  // Current day dot
+  const angle = ((currentDay - 0.5) / total * 360 - 90) * Math.PI / 180;
+  const dotX = cx + (inner + (r - inner) / 2) * Math.cos(angle);
+  const dotY = cy + (inner + (r - inner) / 2) * Math.sin(angle);
+  const phase = getPhase(currentDay, profile.phaseDays);
+  html += `<circle cx="${dotX}" cy="${dotY}" r="5.5" fill="white" stroke="${phase.color}" stroke-width="2"/>`;
+  html += `<text x="${cx}" y="${cy - 7}" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="30" font-weight="600" fill="${phase.color}">${currentDay}</text>`;
+  html += `<text x="${cx}" y="${cy + 13}" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#9E8E84" letter-spacing="1.5">TAG</text>`;
+
+  svg.innerHTML = html;
+}
+
+// ──────────────────────────────────────────────
+// DAY PICKER
+// ──────────────────────────────────────────────
+
+function renderDayGrid() {
+  const grid = document.getElementById("day-grid");
+  const legend = document.getElementById("phase-legend");
+  if (!grid) return;
+  const phases = buildPhases(profile.phaseDays);
+  const total = totalCycleDays(profile.phaseDays);
+  let html = "";
+  for (let d = 1; d <= total; d++) {
+    const p = phases.find(ph => d >= ph.start && d <= ph.end);
+    const active = d === profile.cycleDay;
+    html += `<button class="day-btn" onclick="setDay(${d})"
+      style="background:${active ? p.color : p.accent + '80'};color:${active ? 'white' : p.color};font-weight:${active ? 600 : 400}">${d}</button>`;
+  }
+  grid.innerHTML = html;
+  legend.innerHTML = phases.map(p =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${p.color}"></div><span class="legend-label">${p.name} T${p.start}–${p.end}</span></div>`
+  ).join("");
+}
+
+function setDay(d) {
+  profile.cycleDay = d;
+  saveProfile();
+  renderApp();
+}
+
+// ──────────────────────────────────────────────
+// RENDER TODAY
+// ──────────────────────────────────────────────
+
+function renderToday() {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  applyPhaseTheme(phase);
+
+  // Header
+  document.getElementById("hdr-phase").textContent = phase.name;
+  document.getElementById("hdr-tagline").textContent = phase.tagline;
+  document.getElementById("hdr-day").textContent = profile.cycleDay;
+
+  // Wheel
+  renderWheel(profile.cycleDay);
+
+  // Energy bar
+  const eb = document.getElementById("energy-bar");
+  if (eb) {
+    eb.innerHTML = [1,2,3,4,5].map(i =>
+      `<div class="energy-seg${i <= phase.energy ? " lit" : ""}"></div>`
+    ).join("");
+  }
+
+  document.getElementById("hormone-label").textContent = phase.hormone;
+
+  // Stats
+  const tdee = calcTDEE(profile);
+  const macros = calcMacros(profile, phase);
+  const bmi = calcBMI(profile);
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat"><div class="stat-val">${macros.kcal}</div><div class="stat-unit">kcal</div><div class="stat-label">Tagesziel</div></div>
+    <div class="stat"><div class="stat-val">${calcProteinMin(profile)}g</div><div class="stat-unit">Protein</div><div class="stat-label">Minimum/Tag</div></div>
+    <div class="stat"><div class="stat-val">${tdee}</div><div class="stat-unit">kcal</div><div class="stat-label">Verbrauch</div></div>
+    <div class="stat"><div class="stat-val">${bmi}</div><div class="stat-unit">BMI</div><div class="stat-label">Index</div></div>
+  `;
+
+  // Weight tip
+  const wl = document.getElementById("wtip-label");
+  const wt = document.getElementById("wtip-text");
+  if (wl) { wl.textContent = "Abnehm-Strategie"; wl.style.color = phase.color; }
+  if (wt) wt.textContent = phase.weightLoss;
+
+  // Today's workout (weekday based)
+  const dayOfWeek = new Date().getDay(); // 0=Sun
+  const idx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const workout = phase.workouts[idx % phase.workouts.length];
+  document.getElementById("heute-workout").innerHTML = `
+    <div class="workout-item">
+      <div class="workout-row">
+        <span class="workout-name">${workout.name}</span>
+        <span class="tag tag-intensity">${workout.intensity}</span>
+      </div>
+      <div class="workout-dur">${workout.duration}</div>
+      <div class="workout-tip">"${workout.tip}"</div>
+    </div>
+  `;
+
+  // Nutrition preview
+  const nf = document.getElementById("heute-nutrition-tags");
+  if (nf) nf.innerHTML = phase.nutrition.focus.map(f => `<span class="tag tag-phase">${f}</span>`).join("");
+  const hk = document.getElementById("heute-kcal");
+  if (hk) hk.textContent = `${macros.kcal} kcal · ${phase.nutrition.kcalMod > 0 ? "+" : ""}${phase.nutrition.kcalMod} kcal Phasen-Anpassung`;
+}
+
+// ──────────────────────────────────────────────
+// RENDER TRAINING
+// ──────────────────────────────────────────────
+
+function renderTraining() {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  document.getElementById("training-subtitle").textContent = `Optimiert für deine ${phase.name} · 7-Tage-Plan`;
+
+  // Weekly grid
+  const days = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  const today = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+  document.getElementById("week-grid").innerHTML = days.map((d, i) => {
+    const w = phase.workouts[i % phase.workouts.length];
+    return `<div class="week-day${i === todayIdx ? " today" : ""}">
+      <div class="week-day-label">${d}</div>
+      <div class="week-day-type">${phase.weekEmojis[i]}</div>
+      <div class="week-day-name">${w.name.split(" ")[0]}</div>
+    </div>`;
+  }).join("");
+
+  // All workouts
+  document.getElementById("training-list").innerHTML = phase.workouts.map((w, i) => `
+    <div class="card">
+      <div class="workout-row" style="margin-bottom:6px">
+        <div>
+          <div style="font-family:var(--font-display);font-size:20px;color:var(--text)">${w.name}</div>
+          <div class="workout-dur" style="margin-top:2px">${w.duration}</div>
+        </div>
+        <span class="tag tag-intensity">${w.intensity}</span>
+      </div>
+      <div class="divider"></div>
+      <div class="workout-tip">${w.tip}</div>
+    </div>
+  `).join("");
+
+  // All phases overview
+  document.getElementById("all-phases-training").innerHTML = buildPhases(profile.phaseDays).map(p => `
+    <div class="phase-row">
+      <div class="phase-color-bar" style="background:${p.color}"></div>
+      <div class="phase-row-info">
+        <div class="phase-row-name">${p.name}</div>
+        <div class="phase-row-days">T${p.start}–${p.end} · ${p.workouts.slice(0,3).map(w=>w.name).join(", ")}</div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ──────────────────────────────────────────────
+// RENDER NUTRITION
+// ──────────────────────────────────────────────
+
+function renderNutrition() {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  const macros = calcMacros(profile, phase);
+  const tdee = calcTDEE(profile);
+  const pMin = calcProteinMin(profile);
+
+  document.getElementById("ern-subtitle").textContent = `${phase.name} · ${macros.kcal} kcal Tagesziel`;
+
+  // Macro bars
+  const maxVal = Math.max(macros.protein, macros.carbs, macros.fat) * 1.2;
+  document.getElementById("macro-bars").innerHTML = [
+    { name: "Protein", val: macros.protein, unit: "g", color: phase.color },
+    { name: "Kohlenhydrate", val: macros.carbs, unit: "g", color: phase.accent.replace(")", ",0.8)").replace("rgb","rgba") || "#8BC4A8" },
+    { name: "Fett", val: macros.fat, unit: "g", color: "#D4845A" },
+  ].map(m => `
+    <div class="macro-row">
+      <div class="macro-label-row"><span>${m.name}</span><span style="font-weight:500;color:var(--text)">${m.val}g</span></div>
+      <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.round(m.val/maxVal*100)}%;background:${m.color}"></div></div>
+    </div>
+  `).join("");
+
+  const deficit = tdee - macros.kcal;
+  document.getElementById("macro-note").innerHTML =
+    `Dein Verbrauch: <strong>${tdee} kcal</strong> · Defizit: <strong>−${deficit} kcal</strong> · Protein-Minimum: <strong>${pMin}g</strong> (1,8g/kg, wichtig ab 35+)`;
+
+  // Focus
+  document.getElementById("ern-focus").innerHTML = phase.nutrition.focus.map(f =>
+    `<span class="tag tag-phase">${f}</span>`).join("");
+
+  // Foods
+  document.getElementById("ern-foods").innerHTML = phase.nutrition.foods.map(f =>
+    `<div class="food-item"><div class="food-dot"></div><div class="food-name">${f}</div></div>`
+  ).join("");
+
+  // Avoid
+  document.getElementById("ern-avoid").innerHTML = phase.nutrition.avoid.map(f =>
+    `<span class="tag tag-avoid">${f}</span>`).join("");
+
+  // Tip
+  const tc = document.getElementById("ern-tip-card");
+  if (tc) { tc.querySelector("div").style.color = phase.color; }
+  document.getElementById("ern-tip").textContent = `"${phase.nutrition.tip}"`;
+
+  // Age tip
+  document.getElementById("age-tip").textContent = phase.ageTip;
+}
+
+// ──────────────────────────────────────────────
+// RENDER COACH
+// ──────────────────────────────────────────────
+
+function renderCoach() {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  const macros = calcMacros(profile, phase);
+  const name = profile.name ? profile.name : "du";
+  document.getElementById("coach-context-text").innerHTML =
+    `Ich bin auf <strong style="color:var(--pc)">${phase.name}</strong> (Tag ${profile.cycleDay}) eingestimmt. 
+    ${macros.kcal} kcal · ${calcProteinMin(profile)}g Protein · Energie ${phase.energy}/5.`;
+
+  const qs = [
+    `Warum ist Training in der ${phase.name} so wichtig?`,
+    `Was hilft gegen Heißhunger in dieser Phase?`,
+    `Wie trainiere ich 7× die Woche ohne Übertraining?`,
+    `Welche Übungen helfen mir am meisten beim Abnehmen?`,
+  ];
+  document.getElementById("quick-questions").innerHTML = qs.map(q =>
+    `<button class="quick-q" onclick="sendQuick('${q.replace(/'/g,"\\'")}')"> ${q}</button>`
+  ).join("");
+}
+
+// ──────────────────────────────────────────────
+// RENDER SETTINGS
+// ──────────────────────────────────────────────
+
+function renderSettings() {
+  document.getElementById("set-name").value = profile.name || "";
+  document.getElementById("set-age").value = profile.age;
+  document.getElementById("set-weight").value = profile.weight;
+  document.getElementById("set-height").value = profile.height;
+  document.getElementById("set-activity").value = profile.activity;
+  document.getElementById("set-cycleday").value = profile.cycleDay;
+
+  const phaseNames = { menstrual: "Menstruation", follicular: "Follikelphase", ovulatory: "Ovulationsphase", luteal: "Lutealphase" };
+  const phaseColors = { menstrual: "#C4617A", follicular: "#7B9E87", ovulatory: "#D4845A", luteal: "#8B7ABF" };
+  document.getElementById("phase-settings").innerHTML = Object.keys(phaseNames).map(id => {
+    const phases = buildPhases(profile.phaseDays);
+    const p = phases.find(ph => ph.id === id);
+    return `
+      <div class="phase-row">
+        <div class="phase-color-bar" style="background:${phaseColors[id]}"></div>
+        <div class="phase-row-info">
+          <div class="phase-row-name">${phaseNames[id]}</div>
+          <div class="phase-row-days">T${p.start}–${p.end}</div>
+        </div>
+        <input class="phase-day-input" type="number" min="2" max="18"
+          value="${profile.phaseDays[id]}"
+          onchange="updatePhaseDays('${id}', this.value)"
+          id="set-pd-${id}"/>
+        <span style="font-size:11px;color:var(--muted);width:24px;text-align:center">Tage</span>
+      </div>
+    `;
+  }).join("");
+  updateSetTotal();
+}
+
+function updatePhaseDays(id, val) {
+  profile.phaseDays[id] = Math.max(2, parseInt(val) || 2);
+  updateSetTotal();
+}
+function updateSetTotal() {
+  const t = totalCycleDays(profile.phaseDays);
+  const el = document.getElementById("set-total");
+  if (el) el.textContent = t;
+  const el2 = document.getElementById("ob-total-num");
+  if (el2) el2.textContent = t;
+}
+
+// ──────────────────────────────────────────────
+// MAIN RENDER
+// ──────────────────────────────────────────────
+
+function renderApp() {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  applyPhaseTheme(phase);
+  renderDayGrid();
+  renderToday();
+
+  // Active view
+  const activeView = document.querySelector(".view.active");
+  const id = activeView ? activeView.id.replace("view-","") : "heute";
+  if (id === "training") renderTraining();
+  if (id === "ernaehrung") renderNutrition();
+  if (id === "coach") renderCoach();
+  if (id === "einstellungen") renderSettings();
+}
+
+// ──────────────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────────────
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  const tab = document.querySelector(`[data-view="${name}"]`);
+  const view = document.getElementById(`view-${name}`);
+  if (tab) tab.classList.add("active");
+  if (view) view.classList.add("active");
+
+  if (name === "training") renderTraining();
+  if (name === "ernaehrung") renderNutrition();
+  if (name === "coach") renderCoach();
+  if (name === "einstellungen") renderSettings();
+}
+
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => switchTab(t.dataset.view));
+});
+
+// ──────────────────────────────────────────────
+// DAY PICKER TOGGLE
+// ──────────────────────────────────────────────
+
+document.getElementById("day-badge-btn").addEventListener("click", () => {
+  const picker = document.getElementById("day-picker");
+  picker.classList.toggle("open");
+  if (picker.classList.contains("open")) renderDayGrid();
+});
+
+// ──────────────────────────────────────────────
+// AI COACH
+// ──────────────────────────────────────────────
+
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
+
+chatInput.addEventListener("input", () => {
+  chatSend.disabled = !chatInput.value.trim();
+});
+chatInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+chatSend.addEventListener("click", sendChat);
+
+function sendQuick(q) {
+  document.getElementById("quick-questions").style.display = "none";
+  document.getElementById("chat-wrap").style.display = "block";
+  appendMsg("user", q);
+  callClaude(q);
+}
+
+function sendChat() {
+  const val = chatInput.value.trim();
+  if (!val) return;
+  chatInput.value = "";
+  chatSend.disabled = true;
+  document.getElementById("quick-questions").style.display = "none";
+  document.getElementById("chat-wrap").style.display = "block";
+  appendMsg("user", val);
+  callClaude(val);
+}
+
+function appendMsg(role, text) {
+  const wrap = document.getElementById("chat-wrap");
+  const div = document.createElement("div");
+  div.className = `msg ${role === "user" ? "user" : "ai"}`;
+  div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  chatHistory.push({ role: role === "user" ? "user" : "assistant", content: text });
+}
+
+async function callClaude(msg) {
+  const phase = getPhase(profile.cycleDay, profile.phaseDays);
+  const macros = calcMacros(profile, profile.cycleDay);
+  const typing = document.getElementById("typing-indicator");
+  typing.style.display = "flex";
+  const wrap = document.getElementById("chat-wrap");
+  wrap.scrollTop = wrap.scrollHeight;
+
+  const systemPrompt = `Du bist eine erfahrene, wissenschaftlich fundierte Zyklus-Coach für Frauen. 
+Nutzerin: ${profile.name || "Unbekannt"}, ${profile.age} Jahre, ${profile.weight}kg, ${profile.height}cm.
+BMI: ${calcBMI(profile)}. TDEE: ${calcTDEE(profile)} kcal. Abnehmziel: ${calcGoalKcal(profile, phase)} kcal.
+Protein-Minimum: ${calcProteinMin(profile)}g/Tag. Job: Desk-Job, Home-Office. Ziel: 7×/Woche trainieren.
+Aktuelle Phase: ${phase.name} (Tag ${profile.cycleDay}). Hormone: ${phase.hormone}. Energie: ${phase.energy}/5.
+Phase-Tagline: ${phase.tagline}.
+Antworte auf Deutsch. Empathisch, direkt, konkret. Max 3 kurze Absätze, kein Markdown, kein Aufzählungspunkte.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          ...chatHistory.slice(-8).map(m => ({ role: m.role, content: m.content })),
+        ]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || "Entschuldigung — bitte erneut versuchen.";
+    typing.style.display = "none";
+    appendMsg("ai", reply);
+  } catch {
+    typing.style.display = "none";
+    appendMsg("ai", "Verbindungsfehler. Bitte erneut versuchen.");
+  }
+}
+
+// ──────────────────────────────────────────────
+// SETTINGS SAVE
+// ──────────────────────────────────────────────
+
+document.getElementById("save-btn").addEventListener("click", () => {
+  profile.name = document.getElementById("set-name").value.trim();
+  profile.age = parseInt(document.getElementById("set-age").value) || profile.age;
+  profile.weight = parseFloat(document.getElementById("set-weight").value) || profile.weight;
+  profile.height = parseFloat(document.getElementById("set-height").value) || profile.height;
+  profile.activity = parseFloat(document.getElementById("set-activity").value) || profile.activity;
+  profile.cycleDay = parseInt(document.getElementById("set-cycleday").value) || profile.cycleDay;
+  ["menstrual","follicular","ovulatory","luteal"].forEach(id => {
+    const el = document.getElementById(`set-pd-${id}`);
+    if (el) profile.phaseDays[id] = Math.max(2, parseInt(el.value) || 2);
+  });
+  saveProfile();
+  renderApp();
+  showToast("Gespeichert ✓");
+});
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ──────────────────────────────────────────────
+// ONBOARDING
+// ──────────────────────────────────────────────
+
+function updateObTotal() {
+  const v = id => parseInt(document.getElementById(id)?.value) || 0;
+  const total = v("pd-men") + v("pd-fol") + v("pd-ovu") + v("pd-lut");
+  const el = document.getElementById("ob-total-num");
+  if (el) el.textContent = total;
+}
+
+["pd-men","pd-fol","pd-ovu","pd-lut"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("input", updateObTotal);
+});
+
+document.getElementById("ob1-next").addEventListener("click", () => {
+  document.getElementById("ob1").classList.remove("active");
+  document.getElementById("ob2").classList.add("active");
+});
+document.getElementById("ob2-back").addEventListener("click", () => {
+  document.getElementById("ob2").classList.remove("active");
+  document.getElementById("ob1").classList.add("active");
+});
+document.getElementById("ob2-next").addEventListener("click", () => {
+  const name = document.getElementById("inp-name").value.trim();
+  const age = parseInt(document.getElementById("inp-age").value);
+  const weight = parseFloat(document.getElementById("inp-weight").value);
+  const height = parseFloat(document.getElementById("inp-height").value);
+  const activity = parseFloat(document.getElementById("inp-activity").value);
+  if (!age || !weight || !height) { alert("Bitte Alter, Gewicht und Größe ausfüllen."); return; }
+  profile.name = name; profile.age = age; profile.weight = weight;
+  profile.height = height; profile.activity = activity;
+  document.getElementById("ob2").classList.remove("active");
+  document.getElementById("ob3").classList.add("active");
+});
+document.getElementById("ob3-back").addEventListener("click", () => {
+  document.getElementById("ob3").classList.remove("active");
+  document.getElementById("ob2").classList.add("active");
+});
+document.getElementById("ob3-done").addEventListener("click", () => {
+  const v = id => Math.max(2, parseInt(document.getElementById(id)?.value) || 2);
+  profile.phaseDays = { menstrual: v("pd-men"), follicular: v("pd-fol"), ovulatory: v("pd-ovu"), luteal: v("pd-lut") };
+  const cd = parseInt(document.getElementById("inp-cycleday").value);
+  if (cd && cd >= 1) profile.cycleDay = cd;
+  saveProfile();
+  localStorage.setItem("cs_onboarded", "1");
+  startApp();
+});
+
+function resetApp() {
+  if (!confirm("Alle Daten löschen und neu starten?")) return;
+  localStorage.clear();
+  location.reload();
+}
+
+// ──────────────────────────────────────────────
+// BOOT
+// ──────────────────────────────────────────────
+
+function startApp() {
+  document.getElementById("onboarding").style.display = "none";
+  document.getElementById("main").style.display = "flex";
+  renderApp();
+}
+
+loadProfile();
+if (isOnboarded()) {
+  startApp();
+} else {
+  // Pre-fill defaults for Steffi
+  const inp = document.getElementById("inp-age");
+  if (inp) inp.value = "39";
+  document.getElementById("inp-weight").value = "70";
+  document.getElementById("inp-height").value = "170";
+}
+
+// ──────────────────────────────────────────────
+// PWA MANIFEST
+// ──────────────────────────────────────────────
+
+const manifest = {
+  name: "CycleSync", short_name: "CycleSync",
+  description: "Zyklusbasiertes Training & Ernährung",
+  start_url: ".", display: "standalone",
+  background_color: "#FAF7F2", theme_color: "#FAF7F2",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Ccircle cx='96' cy='96' r='96' fill='%23FDF0F3'/%3E%3Ccircle cx='96' cy='96' r='60' fill='none' stroke='%23C4617A' stroke-width='8'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+  ]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type:"application/json"});
+const link = document.createElement("link");
+link.rel = "manifest";
+link.href = URL.createObjectURL(blob);
+document.head.appendChild(link);
+
+// Service Worker
+if ("serviceWorker" in navigator) {
+  const swCode = `
+    const CACHE = "cyclesync-v1";
+    const ASSETS = ["/"];
+    self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))));
+    self.addEventListener("fetch", e => e.respondWith(
+      caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match("/")))
+    ));
+  `;
+  const swBlob = new Blob([swCode], {type:"text/javascript"});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+}
+</script>
+</body>
+</html>
