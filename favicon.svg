@@ -1,0 +1,14 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="15" fill="#FAF7F2"/>
+  <g fill="none" stroke-width="8" stroke-linecap="round">
+    <!-- Menstruation 7/28 -->
+    <path d="M 32 10 A 22 22 0 0 1 51.5 21.9" stroke="#C4617A"/>
+    <!-- Follikelphase 7/28 -->
+    <path d="M 53.4 27.2 A 22 22 0 0 1 48.7 47.6" stroke="#7B9E87"/>
+    <!-- Ovulation 4/28 -->
+    <path d="M 44.4 51.4 A 22 22 0 0 1 34.4 53.9" stroke="#D4845A"/>
+    <!-- Lutealphase 10/28 -->
+    <path d="M 26.8 53.4 A 22 22 0 0 1 12.2 21.4" stroke="#8B7ABF"/>
+  </g>
+  <circle cx="32" cy="10" r="5.5" fill="#FAF7F2" stroke="#C4617A" stroke-width="3"/>
+</svg>
